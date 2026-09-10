@@ -28,7 +28,8 @@ export function captchas () {
     }
     const captchaInstance = CaptchaModel.build(captcha)
     await captchaInstance.save()
-    res.json(captcha)
+    // Do not expose the answer to the client; it is validated server-side in verifyCaptcha
+    res.json({ captchaId, captcha: expression })
   }
 }
 
