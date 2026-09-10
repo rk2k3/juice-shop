@@ -201,6 +201,11 @@ function configureApp (app: ReturnType<typeof express>, seq: typeof sequelize) {
 
   /* Remove duplicate slashes from URL which allowed bypassing subsequent filters */
   app.use((req: Request, res: Response, next: NextFunction) => {
+    // Reject path/extension filter-bypass encodings (null bytes, backslashes) before
+    // downstream path/extension-based guards can be tricked into skipping their checks.
+    if (req.url.includes('\0') || req.url.includes('\\')) {
+      return res.status(400).end()
+    }
     req.url = req.url.replace(/[/]+/g, '/')
     next()
   })
