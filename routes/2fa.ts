@@ -10,7 +10,7 @@ import { UserModel } from '../models/user'
 import * as challengeUtils from '../lib/challengeUtils'
 import * as utils from '../lib/utils'
 import { challenges } from '../data/datacache'
-import { generateSecret, verifySync } from 'otplib'
+import { verifySync } from 'otplib'
 import * as security from '../lib/insecurity'
 
 export async function verify (req: Request, res: Response) {
@@ -53,7 +53,8 @@ export async function verify (req: Request, res: Response) {
 /**
  * Check the 2FA status of the currently signed-in user.
  *
- * When 2FA is not set up, the result will include data required to start the setup.
+ * Only reports whether 2FA is set up; the TOTP secret and setup token are
+ * never exposed in the response to avoid leaking sensitive credentials.
  */
 export async function status (req: Request, res: Response) {
   try {
@@ -64,16 +65,9 @@ export async function status (req: Request, res: Response) {
     const { data: user } = data
 
     if (user.totpSecret === '') {
-      const secret = generateSecret()
-
       res.json({
         setup: false,
-        secret,
-        email: user.email,
-        setupToken: security.authorize({
-          secret,
-          type: 'totp_setup_secret'
-        })
+        email: user.email
       })
     } else {
       res.json({
